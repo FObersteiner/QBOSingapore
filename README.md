@@ -29,7 +29,6 @@ Extract monthly means of mean zonal wind velocities from singapore radiosonde da
     * ```~/Git/QBOSingapore/srv/qbo_wind_pdf.pdf```
 
 
-
 DATA PROCESSING OF RADIOSONDE DATA
 ==================================
 
