@@ -1,8 +1,0 @@
-&INP
-    SYYYY = 1987,
-    EYYYY = 2014,
-    INFILE1 = '../data/shea/QBO/qbo_u',
-    INFILE2 = '../data/qbo.highres.dat',
-    INFILE3 = '../data/qbo_100hPa.dat',
-    OUTFILE = 'qbo_highres'
-/
