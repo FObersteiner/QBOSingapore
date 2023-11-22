@@ -160,4 +160,9 @@ cython_debug/
 #.idea/
 
 wmo_archiv/
-
+attic/
+idl/
+srv/Archive/
+Test/
+grads/
+netcdf/
