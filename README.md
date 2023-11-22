@@ -1,11 +1,9 @@
-<<<<<<< HEAD
 
 
 # Singapore radiosonde processing for QBO
 =======
 # QBOSingapore
 Extract monthly means of mean zonal wind velocities from singapore radiosonde data 
->>>>>>> e93680f97b28d2098ffee4c6a9230046460a280b
 
 1. Save file from Singapore and unzip in ```TEMP YYYY-MM``` in the folder ```~/Git/QBOSingapore/wmo_archiv```
 2. Create TAC files using the script ```~/Git/QBOSingapore/wmo_archiv/singapore.sh ```
@@ -30,7 +28,6 @@ Extract monthly means of mean zonal wind velocities from singapore radiosonde da
     * ```~/Git/QBOSingapore/srv/qbo_singapore_fub.nc```
     * ```~/Git/QBOSingapore/srv/qbo_wind.jpg```
     * ```~/Git/QBOSingapore/srv/qbo_wind_pdf.pdf```
-<<<<<<< HEAD
 
 
 
@@ -225,5 +222,3 @@ file_add (file_add.f90)
      qbo.dat
      singapore.dat
 
-=======
->>>>>>> e93680f97b28d2098ffee4c6a9230046460a280b
