@@ -1,0 +1,51 @@
+#
+# $Id: make_g95.incl,v 1.1.1.1 2010/10/08 07:12:32 kunze Exp $
+#
+#- Common macros --------------------------------------------------
+
+SYS      = g95
+
+HOST = $(shell hostname)
+ifeq ($(HOST), calc01)
+  BIT = 64
+else
+  BIT = 32
+endif
+#
+ifeq ($(HOST), strat06)
+  NETCDF = /usr/local/software/netcdf/netcdf-4.0_${SYS}
+else
+  NETCDF=$(HOME)/local/netcdf/netcdf_${SYS}_${BIT}
+endif
+
+CC       = gcc
+CFLAGS   = -O3
+CPPFLAGS = 
+
+F77      = g95
+FFLAGS   = -O3
+
+F90      = g95
+F90FLAGS = -O3 -fmod=$(MODDIR) -I$(MODDIR) -I$(NETCDF)/include
+F90NOOPT = -O0 -fmod=$(MODDIR) -I$(MODDIR) -I$(NETCDF)/include
+F95      = g95
+F95FLAGS = -O3
+
+FPP      = g95 -cpp
+FPPFLAGS = -DLITTLE_ENDIAN $(F90FLAGS)
+
+LD_OPTIONS = 
+LDFLAGS  = -L$(NETCDF)/lib -Lobj
+
+LIBS     = -l$(PROGN) -lnetcdf
+
+AR       = ar
+ARFLAGS  = -crv
+
+BINDIR   = $(HOME)/local/bin
+LIBLOCAL = $(HOME)/local/lib_g95
+MODLOCAL = $(HOME)/local/mod_g95
+
+INSTALL  = cp -p
+
+

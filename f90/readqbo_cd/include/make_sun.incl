@@ -1,0 +1,80 @@
+#
+# $Id: make_sun.incl,v 1.1.1.1 2010/10/08 07:12:32 kunze Exp $
+#
+#- Common macros --------------------------------------------------
+
+HOST = $(shell hostname)
+ifeq ($(HOST), calc01)
+  BIT = 64
+  NETCDF_SUN = $(HOME)/local/netcdf/netcdf-4.0.1_sun_$(BIT)
+else ifeq ($(HOST), calc02)
+  BIT = 64
+  NETCDF_SUN = $(HOME)/local/netcdf/netcdf-4.0.1_sun_$(BIT)
+else ifeq ($(HOST), strat25)
+  BIT = 64
+  NETCDF_SUN = $(NETCDF)
+else ifeq ($(HOST), strat06)
+  BIT = 32
+  NETCDF_SUN = /usr/local/netcdf/netcdf_sun
+else
+  BIT = 32
+  NETCDF_SUN = $(HOME)/local/netcdf/netcdf-4.0.1_sun_$(BIT)
+endif
+ifeq ($(HOST), strat25)
+  BITFLAG = 
+else
+  BITFLAG = -m${BIT}
+endif
+
+ENDIAN = little
+#ENDIAN = big
+# -
+# - -----------------------------------------------------
+# -
+ifeq (${ENDIAN}, big)
+  F90CON  = -xfilebyteorder=big8:%all
+  PEXT    = .be
+  DENDIAN = BIG_ENDIAN
+else
+  F90CON  = -xfilebyteorder=little4:%all
+  PEXT    = .le
+  DENDIAN = LITTLE_ENDIAN
+endif
+
+CC       = cc
+CFLAGS   = -O3
+CPPFLAGS = 
+
+FC       = f95
+
+F77      = $(FC) -fpp
+FFLAGS   = -O3
+
+F90      = $(FC) -fpp $(BITFLAG)
+#F90FLAGS = -O5 $(F90CON) -moddir=$(MODDIR) -xprofile=use:mlreg \
+                -xlic_lib=sunperf -M$(MODDIR) -M$(INCDIR)
+F90FLAGS = -O0 -g -C -u -w1 $(F90CON) -moddir=$(MODDIR) -M$(MODDIR) -M$(INCDIR)
+#F90FLAGS = -O3 $(F90CON) -xautopar -moddir=$(MODDIR) -M$(MODDIR) -M$(INCDIR)
+#F90FLAGS = -O3 $(F90CON) -moddir=$(MODDIR) -M$(MODDIR) -M$(INCDIR)
+F90NOOPT = -O0 $(F90CON) -moddir=$(MODDIR) -M$(MODDIR) -M$(INCDIR)
+
+FPP      = $(F90)
+FPPFLAGS = $(F90FLAGS) -D${DENDIAN} -DLAPACK
+
+LD         = $(FC)
+LD_OPTIONS = 
+#LDFLAGS    = -xprofile=collect -L$(NETCDF_SUN)/lib -Lobj
+#LDFLAGS    = -xprofile=use -L$(NETCDF_SUN)/lib -Lobj
+LDFLAGS    = -L$(NETCDF_SUN)/lib -Lobj -xlic_lib=sunperf
+
+LIBS       = -l$(PROGN) -lnetcdf -lsunperf
+
+AR       = ar
+ARFLAGS  = -crv
+
+BINDIR     = $(HOME)/local/bin
+LIBLOCAL   = $(HOME)/local/lib_$(SYS)
+MODLOCAL   = $(HOME)/local/mod_$(SYS)
+INCDIR     = $(NETCDF_SUN)/include
+
+INSTALL  = cp -p

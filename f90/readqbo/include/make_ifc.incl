@@ -1,0 +1,87 @@
+#
+# $Id: make_ifc.incl,v 1.1.1.1 2010/10/08 07:12:32 kunze Exp $
+#
+#- Common macros --------------------------------------------------
+# -
+# - --- identify the host ----------------------------------------------
+# -
+HOST = $(shell hostname)
+ifeq ($(HOST), calc01)
+  BIT = 64
+else
+  BIT = 32
+endif
+#
+ifeq ($(HOST), calc01)
+  NETCDF  = $(HOME)/local/netcdf/netcdf-3.6.3_ifc_${BIT}
+else ifeq ($(HOST), strat13)
+  NETCDF = /net/opt/netcdf/netcdf-3.6.1-ifort-${BIT}
+else ifeq ($(HOST), strat06)
+  NETCDF = /usr/local/netcdf/netcdf_ifc
+else
+  NETCDF=$(HOME)/local/netcdf/netcdf_ifc_${BIT}
+endif
+#ENDIAN = little
+ENDIAN = big
+# -
+# - -----------------------------------------------------
+# -
+ifeq (${ENDIAN}, big)
+  F90CON  = -convert big_endian
+  PEXT    = .be
+  DENDIAN = BIG_ENDIAN
+else
+  F90CON  = -convert native
+  PEXT    = .le
+  DENDIAN = LITTLE_ENDIAN
+endif
+#
+SYS      = ifc
+
+F77      = ifort
+FFLAGS   = -O3
+
+F90      = ifort
+#F90FLAGS = -O3 $(F90CON) -fp-model strict -check bounds -warn all -implicitnone -static \
+#           -assume byterecl -module $(MODDIR) -I$(MODDIR) -I$(NETCDF)/include
+#F90FLAGS = -O0 -g $(F90CON) -fp-model precise -C -check bounds \
+#           -implicitnone -static -assume byterecl -module $(MODDIR) \
+#           -I$(MODDIR) -I$(NETCDF)/include
+F90FLAGS = -O $(F90CON) -fp-model precise  -implicitnone -assume byterecl \
+           -module $(MODDIR) -I$(MODDIR)   -I$(NETCDF)/include
+#F90FLAGS = -fast $(F90CON) -fp-model strict -implicitnone -assume byterecl \
+#           -module $(MODDIR) -I$(MODDIR) -I$(NETCDF)/include
+F90NOOPT = $(F90FLAGS)
+F95      = ifort
+F95FLAGS = -O3
+#
+# Different librarys can be used to calculate the eigen vectors in the 
+# program eof. With defining the preprocessor parameter it can be 
+# switched between the librarys.
+# Allways be used can the definition -DNUMREC, because the subroutines
+# are part of the local library.
+#
+# -DLAPACK  - compile with lapack library. 
+# -DNAG_LIB - compile with NAG-library.
+# -DNUMREC  - compile with numerical recipes.
+#
+# -DDEBUG   - write some more runtime information .
+#
+FPP      = ifort
+FPPFLAGS = -fpp $(F90FLAGS) -D${DENDIAN}
+
+LD       = $(F90)
+LD_OPTIONS = 
+LDFLAGS  = -L$(NETCDF)/lib -Lobj
+
+LIBS     = -l$(PROGN) -lnetcdf
+
+AR       = ar
+ARFLAGS  = -crv
+
+BINDIR   = $(HOME)/local/bin
+LIBLOCAL = $(HOME)/local/lib_$(SYS)
+MODLOCAL = $(HOME)/local/mod_$(SYS)
+
+INSTALL  = cp -p
+

@@ -1,0 +1,11 @@
+OBJS = \
+      read_qbo.o  \
+      date_module.o  \
+      kind_mod.o  \
+      messages_mod.o  \
+      mod_datesplit.o  \
+      mod_datestep.o  \
+      mod_monthbeside.o  \
+      mod_monthcount.o  \
+      mod_read_qbo.o  \
+      read_qbo_data.o
