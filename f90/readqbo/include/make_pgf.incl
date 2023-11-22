@@ -1,0 +1,44 @@
+#
+# $Id: make_pgf.incl,v 1.1.1.1 2010/10/08 07:12:32 kunze Exp $
+#
+#- Common macros --------------------------------------------------
+
+CC       = gcc
+CFLAGS   = -O3
+CPPFLAGS = 
+
+F77      = pgf90
+FFLAGS   = -O3
+
+F90      = pgf90
+F90FLAGS = -O3 -module $(MODDIR)
+F90NOOPT = $(F90FLAGS)
+F95      = pgf90
+F95FLAGS = -O3
+
+FPP      = fpp
+FPPFLAGS = -DLINUX -DLITTLE_ENDIAN
+
+LD_OPTIONS = 
+LDFLAGS  = -L$(NETCDF)/lib -Lobj
+
+LIBS     = -l$(PROGN) -lnetcdf
+
+AR       = ar
+ARFLAGS  = -crv
+
+BINDIR   = $(HOME)/local/bin
+LIBLOCAL = $(HOME)/local/lib_$(SYS)
+MODLOCAL = $(HOME)/local/mod_$(SYS)
+
+INSTALL  = cp -p
+
+#- Secondary targets  ---------------------------------------------
+
+.SUFFIXES: .F90
+
+.F90.o:
+	$(FPP) $(FPPFLAGS) $< `dirname $<`/`basename $< .F90`.f90
+	$(F90) $(F90FLAGS) -c `dirname $<`/`basename $< .F90`.f90 \
+	-o `dirname $<`/`basename $< .F90`.o
+	@rm -f `dirname $<`/`basename $< .F90`.f90

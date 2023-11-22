@@ -1,0 +1,5 @@
+Pararmeterliste beim QBO Aufruf:  -g -w -a 1989.02 --
+1989.02
+data path /daten/opdata/Stationsdaten_DWD/wmo_archiv/1989/M02 not existing.
+Parse RS Daten
+Interpoliere die QBO aus den RS Daten

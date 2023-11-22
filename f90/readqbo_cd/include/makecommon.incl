@@ -1,0 +1,71 @@
+#
+# $Id: makecommon.incl,v 1.1.1.1 2010/10/08 07:12:32 kunze Exp $
+#
+#- Program macros -------------------------------------------------
+
+PROG   = $(PROGN)_$(SYS)$(BIT)$(PEXT)
+SRCS   = obj/$(PROGN).f90
+OBJS   = obj/$(PROGN).o
+
+MAKEFILE_INC = include/make_dep.incl
+MODDIR = mod
+LIBDIR = obj
+
+SRCDIRS = src lib
+FSRCS  := $(foreach DIR, $(SRCDIRS), $(wildcard $(DIR)/*.f90  $(DIR)/*.F90))
+NOBJS   = $(shell ls $(FSRCS) | wc -l)
+
+OBJ_INCL  = include/makeobjs.incl
+
+F_makedepend=util/sfmakedepend  --file - $(addprefix --srcdir ,$(SRCDIRS)) \
+                                    $(subst -I,-I ,$(Includes))
+
+#- Main targets ---------------------------------------------------
+
+all: libs $(PROG)
+
+$(PROG): $(OBJS)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+libs: link
+	cd $(LIBDIR)  && $(MAKE) -f Makefile SYS=$(SYS) \
+	                                     MODDIR=../$(MODDIR) \
+	                                     PROGN=$(PROGN)
+
+install: all
+	$(INSTALL) $(PROG) $(BINDIR)/$(PROG)
+
+clean:
+	rm -f $(OBJS) *.mod *.vo *.M core
+
+realclean: clean
+	rm -f $(PROG) *.a
+	cd $(LIBDIR) && $(MAKE) -f Makefile realclean SYS=$(SYS)  MODDIR=../$(MODDIR)
+
+link: depend
+	echo 'OBJS = \' > $(OBJ_INCL); \
+	i=`expr 0`; \
+	for file in $(FSRCS); do \
+	   lnfile=$(LIBDIR)/`basename $$file`; \
+	   if [ ! -h $$lnfile ]; then \
+	      (cd $(LIBDIR); ln -s ../$$file .); \
+	   fi; \
+	   i=`expr $$i + 1`; \
+	   obj=`basename $$file .f90`.o ; \
+	   if [ $$i -eq $(NOBJS) ]; then \
+	      echo "      $$obj" >> $(OBJ_INCL); \
+	   else \
+	      echo "      $$obj  \\" >> $(OBJ_INCL); \
+	   fi; \
+	done; \
+	if [ ! -f $(MAKEFILE_INC) ]; then \
+	   $(F_makedepend) $(FSRCS) > $(MAKEFILE_INC); \
+	fi
+
+depend $(MAKEFILE_INC):
+	$(F_makedepend) $(FSRCS) > $(MAKEFILE_INC)
+
+#- Dependencies ---------------------------------------------------
+
+$(PROG).o: lib$(PROG).a
+

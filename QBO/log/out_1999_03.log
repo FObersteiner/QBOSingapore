@@ -1,0 +1,8 @@
+Pararmeterliste beim QBO Aufruf:  -g -w -a 1999.03 --
+1999.03
+Kopiere RS Daten aus dem Archiv
+Parse RS Daten
+Interpoliere die QBO aus den RS Daten
+ Jahr:        1999 Date:        9903
+ Filepath: 
+ ./qbo_data_new/qbo.dat

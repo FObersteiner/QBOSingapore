@@ -1,0 +1,60 @@
+GT C,
+
+> > What is the status of you coming to Boulder?
+> 
+> Hmm - the ASP application didn't work out
+
+Typical
+
+> Something entirely different: I once obtained a time series of
+> daily Singapore radiosonde observations (standard and significant
+> levels) from NCAR, reaching until, if I remember correctly, end of 1992.
+> I'm using them in my thesis to look at the relation between QBO
+> temperature anomalies and vertical shear, and I would, if possible,
+> like to do that with data until present. Do you know if more recent
+> Singapore data is available at NCAR? And if so, who would be the right
+> person to ask for?
+
+I have put some ascii u and t data onto our ftp area. The data
+are from a composite of stations mainly singapore). I assume BarbN 
+has the data also.  The only way to get the significant levels are present on 
+the original daily tapes but not on these files.
+
+(1) ftp sage.cgd.ucar.edu           [also could use ftp 128.117.56.10]
+(2) log in as user anonymous
+(3) use mail address for a password [actually anything could be used]
+(4) cd pub/shea/mls
+(5) set ascii
+(6) get qbo_t            temperatures from a composite of stations
+    get qbo_u            zonal winds  from a composite of stations
+(7) logout
+
+pressure levels are:
+
+      data ipres /2000        ! 2000 is a code for the surface  
+     *           ,1000,850,700,500,400,300,250,200,150,100
+     *           ,  70, 50, 30, 20, 10/ 
+
+
+example: id=station id;  x=type variable (2=temperature; 3=zonal wind)
+         yr=year        mo=month
+  id   x yr mo
+489680 3 96 12   16   53   56    5  -48  -88 -125 -182 -241 -109  -33 -202  -53  163  172
+
+read the data records using:
+
+      read (iunit,
+     *     "(i7,i2,2i3,17i5)") idqbo,itype,nyear,nmo
+     *     ,(iwork(nl),nl=1,nlvl)   
+
+
+
+> Would BUFR be a possible option? And is there an easy-to-use interface
+> available somewhere (It wouldn't matter if fortran or C).
+
+I will get back to u on this. I know that NCEP is using BUFR.
+I think it is a terrible format but ....
+
+Regards,
+dennis
+

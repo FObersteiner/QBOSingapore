@@ -1,0 +1,16 @@
+This directory contains the following files:
+
+These files contain QBO wind data until Dec 2000:
+
+  qbo.dat           7 level QBO zonal wind data from Naujokat (70 - 10 hPa)
+  qbo.highres.dat  14 level QBO zonal wind data from Naujokat (90 - 10 hPa)
+
+This file contains 100 hPa wind data from Jan 1997 to Dec 2000:
+
+  qbo_100hPa.dat
+
+100 hPa wind data before 1997 are contained in the subdirectory shea.
+
+
+
+  C. Marquardt, 11 Dec 2002
