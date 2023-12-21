@@ -1,17 +1,19 @@
 # QBO
 # Dominik Ehnert
 # 01.11.2018
-# Jeden Monat in Zeile 86:
-# erste Dimension immer um 1 erhöhen
-# qbo4.neu <- array(NA, c(419, 16))
+# Increase 'nom = 443' by one for each new month in line 13
+## Jeden Monat in Zeile 86:
+## erste Dimension immer um 1 erhöhen
+## qbo4.neu <- array(NA, c(419, 16))
 #
 library(ggplot2)
 
 source("./filled.contour3.R")
 
+nom = 443 # Number of months, increase by one for every new month.
 
 fname = '../QBO/qbo_data/qbo.dat'       # 70 - 10 hPa fuer den Zeitraum 1953 - aktuell
-fname2 = '../data/shea/qbo_u'						# 100 hPa fuer den Zeitraum 1957 - 1996
+fname2 = '../data/shea/qbo_u'		# 100 hPa fuer den Zeitraum 1957 - 1996
 fname3 = '../data/qbo_100hPa.dat'       # 100 hPa seit 1997
 fname4 = '../data/qbo.highres.dat'      # ab 1987
 
@@ -83,7 +85,7 @@ colnames(qbo3) <- c("YY", "MM", "100hPa")
 data4 <- read.table(fname4)
 qbo4 <- data4[1:16]
 
-qbo4.neu <- array(NA, c(442, 16))    #erste Zahl immer um 1 erhöhen
+qbo4.neu <- array(NA, c(nom, 16))    #erste Zahl immer um 1 erhöhen
 colnames(qbo4.neu) <- c("YY", "MM", "10hPa", "12hPa", "15hPa", "20hPa", "25hPa", "30hPa", "35hPa", "40hPa", "45hPa", "50hPa", "60hPa", "70hPa", "80hPa", "90hPa")
 dim(qbo4.neu)
 dim(qbo4)

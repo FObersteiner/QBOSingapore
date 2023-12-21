@@ -166,3 +166,7 @@ srv/Archive/
 Test/
 grads/
 netcdf/
+f90/
+qbo_Rplot/
+QBO/src/
+

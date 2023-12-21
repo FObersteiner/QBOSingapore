@@ -1,5 +1,5 @@
 #
-# Copy the QBO figures from strat25 to the working directory.
+# Copy the QBO figu:res from strat25 to the working directory.
 # It is necessary to work with idl on strat25.
 #
 FIGS = ../qbo_Rplot
@@ -10,7 +10,7 @@ DATFILES = ${REPO}/qbo.dat ${REPO}/singapore202*.dat ${REPO}/singapore.dat
 
 
 #all: cp png gif jpg tar zip
-all: cp tar zip
+all: cp tar zip jpg
 
 cp:
 	cp -p ${FIGS}/qbo_wind_pdf.pdf ${WDIR}
