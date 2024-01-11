@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+
 # C extensions
 *.so
 
@@ -169,4 +170,11 @@ netcdf/
 f90/
 qbo_Rplot/
 QBO/src/
-
+QBO/qbo_data/
+QBO/data/
+QBO/bin/
+QBO/log/
+QBO/template/
+data/
+srv/archive/
+.DS_Store
