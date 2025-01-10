@@ -88,7 +88,7 @@ def read_singapore(nmonth, nyear):
             file.readline()
             count = count + 1
     pressure = [100, 90, 80, 70, 60, 50, 45, 40, 35, 30, 25, 20, 15, 12, 10]
-    altitude = -7 * np.log(np.array(pressure) / 1013.15)
+    altitude = -7 * np.log(np.array(pressure) / 1013.25)
     fds = list(mpl.dates.date2num(date))
     fds = np.array(fds)
     return np.array(dats).T[::-1], fds, pressure, altitude
@@ -183,7 +183,7 @@ def read_qbo():
     )
 
     pressure = [70, 50, 40, 30, 20, 15, 10]
-    altitude = -7 * np.log(np.array(pressure) / 1013.15)
+    altitude = -7 * np.log(np.array(pressure) / 1013.25)
     #    print(up)
     return up, fds, pressure, altitude
 
@@ -322,7 +322,7 @@ def main():
     select.axis.major_label_text_font_size = "15px"
     select.yaxis.major_label_text_font_size = "0px"
 
-    altitude = -7 * np.log(np.array(pressure) / 1013.15)
+    altitude = -7 * np.log(np.array(pressure) / 1013.25)
 
     p.extra_y_ranges["altitude"] = Range1d(min(altitude), max(altitude))
     # p.contour(axt, pressure, axz, contour_levels, fill_color=Sunset8, line_color="black", y_range_name='altitude')

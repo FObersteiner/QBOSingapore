@@ -49,7 +49,7 @@ def read_singapore(nmonth, nyear, file_path='../QBO/qbo_data/singapore.dat'):
     dats = []
     date = []
     pressure = [100, 90, 80, 70, 60, 50, 45, 40, 35, 30, 25, 20, 15, 12, 10]
-    altitude = -7 * np.log(np.array(pressure) / 1013.15)
+    altitude = -7 * np.log(np.array(pressure) / 1013.25)
 
     with open(file_path) as file:
         for i in range(3):
@@ -123,7 +123,7 @@ def read_qbo(file_path='../QBO/qbo_data/qbo.dat'):
     un = np.array([data['n70'], data['n50'], data['n40'], data['n30'], data['n20'], data['n15'], data['n10']])
     
     pressure = [70, 50, 40, 30, 20, 15, 10]
-    altitude = -7 * np.log(np.array(pressure) / 1013.15)
+    altitude = -7 * np.log(np.array(pressure) / 1013.25)
     
     return up, fds, pressure, altitude, station, un, date
 
