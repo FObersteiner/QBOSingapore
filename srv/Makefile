@@ -13,18 +13,20 @@ DATFILES = ${REPO}/qbo.dat ${REPO}/singapore202*.dat ${REPO}/singapore.dat
 all: cp tar zip jpg
 
 cp:
-	cp -p ${FIGS}/qbo_wind_pdf.pdf ${WDIR}
+	cp -p ${FIGS}/qbo_wind.pdf ${WDIR}
 gif:
-	convert qbo_wind_pdf.pdf qbo_wind.gif	
+	magick qbo_wind.pdf qbo_wind.gif	
 #png:
-#	convert -density 150 qbo_wind_pdf.pdf -quality 100 -alpha off  qbo_wind.jpg	
+#	magick -density 150 qbo_wind.pdf -quality 100 -alpha off  qbo_wind.png	
 png:
-	convert -density 150 qbo_wind_pdf.pdf -quality 100 qbo_wind.jpg	
+	magick -density 150 qbo_wind.pdf -quality 100 qbo_wind.png	
 #jpg:
-#	convert -density 150 qbo_wind_pdf.pdf -quality 100 -alpha off  qbo_wind.jpg
+#	magick -density 150 qbo_wind.pdf -quality 100 -alpha off  qbo_wind.jpg
+#jpg:
+	#magick -density 300 qbo_wind.pdf -quality 100 qbo_wind.jpg
 jpg:
-	convert -density 150 qbo_wind_pdf.pdf -quality 100 qbo_wind.jpg
-
+	pdftoppm -jpeg -r 300 qbo_wind.pdf qbo_wind.jpg
+	mv -f qbo_wind.jpg-1.jpg qbo_wind.jpg
 tar:
 	tar -czf qbo_data_tgz.tgz $(DATFILES)
 
