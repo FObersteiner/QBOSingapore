@@ -178,3 +178,6 @@ QBO/template/
 data/
 srv/archive/
 .DS_Store
+
+# temporary files
+*.~*
