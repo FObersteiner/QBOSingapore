@@ -55,24 +55,26 @@ template_html = f"""
 # ----------------------------------------------------------------------------------------
 
 
-def get_palette(palette_name, n_colors=8):
-    ### Claude 3.7 ###
-    # Try to get the palette with the specified number of colors
+def get_palette(palette_name: str, n_colors: int = 9):
+    """
+    Get color palette by name.
+    Common number of colors are [9, 10, 11, 12, 256].
+    If n is not available, interp_palette is used to generate one.
+    """
+
     try:
         palette_full_name = f"{palette_name}{n_colors}"
         return getattr(palettes, palette_full_name)
     except AttributeError:
-        # If that exact number isn't available, try to get a larger palette and slice it
-        for size in [9, 10, 11, 12, 256]:  # Common palette sizes
-            try:
-                palette_full_name = f"{palette_name}{size}"
-                return getattr(palettes, palette_full_name)[:n_colors]
-            except AttributeError:
-                continue
+        pass
 
-        # If we can't find the palette, fall back to a default
+    try:
+        palette = getattr(palettes, palette_name)
+    except AttributeError:
         print(f"Palette {palette_name} not found. Using Spectral8 instead.")
         return palettes.Spectral8
+
+    return palettes.interp_palette(palette[max(palette.keys())], n_colors)
 
 
 def download(url, file_name):
@@ -267,7 +269,8 @@ def main():
     u = griddata(points1, uu, (X, Y), method="linear")
     # nrows = 7
 
-    contour_levels = range(-40, 45, 5)
+    contour_levels = list(range(-40, 45, 5))
+
     deltat = int((np.nanmax(fds) - fds[0]) / 1) + 1
 
     by0 = fds[0]
@@ -296,7 +299,7 @@ def main():
         pressure,
         axz,
         contour_levels,
-        fill_color=get_palette(COLOR_PALETTE),  # Sunset8,
+        fill_color=get_palette(COLOR_PALETTE, len(contour_levels)),
         line_color="black",
     )
 
@@ -320,7 +323,7 @@ def main():
         axz,
         contour_levels,
         line_alpha=0.1,
-        fill_color=get_palette(COLOR_PALETTE),  # Sunset8,
+        fill_color=get_palette(COLOR_PALETTE, len(contour_levels)),
         line_color="black",
     )
     select.add_tools(range_tool)
