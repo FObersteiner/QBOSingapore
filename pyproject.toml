@@ -1,0 +1,19 @@
+[project]
+name = "QBOSingapore"
+version = "0.1.0"
+description = "Extract monthly means of mean zonal wind velocities from singapore radiosonde data"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "bokeh>=3.7.2",
+    "matplotlib>=3.10.1",
+    "numpy>=2.2.4",
+    "requests>=2.32.3",
+    "scipy>=1.15.2",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "ruff>=0.11.4",
+]
