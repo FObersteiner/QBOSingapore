@@ -1,13 +1,3 @@
-# /// script
-# requires-python = ">=3.12"
-# dependencies = [
-#     "bokeh",
-#     "matplotlib",
-#     "numpy",
-#     "requests",
-#     "scipy",
-# ]
-# ///
 import io
 import datetime
 
@@ -18,13 +8,26 @@ from requests import get
 from urllib.request import urlopen
 from scipy.interpolate import griddata
 
-from bokeh.plotting import figure
+from bokeh.plotting import figure, output_file, save, show
 from bokeh.embed import components
 from bokeh.models import RangeTool, Range1d, CustomJSTickFormatter
 from bokeh.layouts import column
-from bokeh.palettes import Sunset8
+from bokeh import palettes
 from bokeh import __version__ as bokeh_version
-from bokeh.models import DatetimeTicker, DatetimeTickFormatter
+from bokeh.models import DatetimeTicker  # , DatetimeTickFormatter
+
+# ----------------------------------------------------------------------------------------
+
+# save only plot to single html file?
+SAVE_STATIC = False
+
+# only show the plot, don't save it?
+SHOW = False
+
+# if the specified palette is not available, it will fall back to 'Spectral8'
+COLOR_PALETTE = "RdBu"
+
+# ----------------------------------------------------------------------------------------
 
 template_html = f"""
 <!DOCTYPE html>
@@ -48,6 +51,29 @@ template_html = f"""
   <script src="plot.js"></script>
 </html>
 """
+
+# ----------------------------------------------------------------------------------------
+
+
+def get_palette(palette_name, n_colors=8):
+    ### Claude 3.7 ###
+    # Try to get the palette with the specified number of colors
+    try:
+        palette_full_name = f"{palette_name}{n_colors}"
+        return getattr(palettes, palette_full_name)
+    except AttributeError:
+        # If that exact number isn't available, try to get a larger palette and slice it
+        for size in [9, 10, 11, 12, 256]:  # Common palette sizes
+            try:
+                palette_full_name = f"{palette_name}{size}"
+                return getattr(palettes, palette_full_name)[:n_colors]
+            except AttributeError:
+                continue
+
+        # If we can't find the palette, fall back to a default
+        print(f"Palette {palette_name} not found. Using Spectral8 instead.")
+        return palettes.Spectral8
+
 
 def download(url, file_name):
     # open in binary mode
@@ -209,12 +235,12 @@ def main():
     print(nmonth, nyear)
     up2, fds2, pressure, altitude = read_singapore(nmonth, nyear)
     fds = fds1
-    print(fds[-fds2.size],fds[-fds2.size+1])
+    print(fds[-fds2.size], fds[-fds2.size + 1])
     print(fds2[0])
-    print(np.size(fds1),np.size(fds2))
+    print(np.size(fds1), np.size(fds2))
     fds[-fds2.size :] = fds2
     fds = np.array(fds)
-    print(np.size(fds),fds[-1],fds1[-1],fds2[-1])
+    print(np.size(fds), fds[-1], fds1[-1], fds2[-1])
     print(mdates.num2date(fds2[-1]))
     up1 = up1 * 1.0
     up1[up1 < -10000] = np.nan
@@ -252,21 +278,26 @@ def main():
     axz = u[:, np.nanargmin(abs(fds - by0)) : 1 + np.nanargmin(abs(fds - by1))]
 
     # axt = [t.strftime("%m/%Y") for t in mdates.num2date(axt)]
-    
+
     p = figure(
         width=1200,
         height=500,
         y_axis_type="log",
-        y_range=(max(pressure), min(pressure)),
-        x_range=(axt[0], axt[100]),
+        y_range=(max(pressure), min(pressure)),  # type: ignore
+        x_range=(axt[0], axt[100]),  # type: ignore
         y_axis_label="Pressure [hPa]",
         # title="Quasi-Biennial-Oscillation (QBO)"
     )
-    p.title.text_font_size = "25px"
-    p.title.align = "center"
+    p.title.text_font_size = "25px"  # type: ignore
+    p.title.align = "center"  # type: ignore
 
     contour_renderer = p.contour(
-        axt+7*30, pressure, axz, contour_levels, fill_color=Sunset8, line_color="black"
+        axt + 7 * 30,
+        pressure,
+        axz,
+        contour_levels,
+        fill_color=get_palette(COLOR_PALETTE),  # Sunset8,
+        line_color="black",
     )
 
     select = figure(
@@ -284,12 +315,12 @@ def main():
     range_tool.overlay.fill_alpha = 0.4
 
     select.contour(
-        axt+5*30*12+4*30+15,
+        axt + 5 * 30 * 12 + 4 * 30 + 15,
         pressure,
         axz,
         contour_levels,
         line_alpha=0.1,
-        fill_color=Sunset8,
+        fill_color=get_palette(COLOR_PALETTE),  # Sunset8,
         line_color="black",
     )
     select.add_tools(range_tool)
@@ -331,7 +362,6 @@ def main():
     # """
     # )
 
-
     # # Top plot: yearly labels starting from January 1st
     # p.xaxis.formatter = CustomJSTickFormatter(
     # code="""
@@ -354,19 +384,19 @@ def main():
     # }
     # """
     # )
-    
+
     # Top Plot (Align the labels correctly)
 
-    p.xaxis.formatter = CustomJSTickFormatter(
+    p.xaxis.formatter = CustomJSTickFormatter(  # type: ignore
         code="""
         const date = new Date(tick * 24 * 60 * 60 * 1000);  // Convert from date2num to milliseconds
         const year = date.getUTCFullYear();  // Extract the year
         return `${year}`;  // Return the year
         """
     )
-    
+
     # Bottom Plot (10-Year Interval Labels)
-    select.xaxis.formatter = CustomJSTickFormatter(
+    select.xaxis.formatter = CustomJSTickFormatter(  # type: ignore
         code="""
         const date = new Date(tick * 24 * 60 * 60 * 1000);  // Convert from date2num to milliseconds
         const year = date.getUTCFullYear();  // Extract the year
@@ -375,9 +405,9 @@ def main():
         """
     )
 
-    p.xaxis.ticker.num_minor_ticks = 12
-    select.xaxis.ticker.num_minor_ticks = 10
-    #select.xaxis.formatter = CustomJSTickFormatter(
+    p.xaxis.ticker.num_minor_ticks = 12  # type: ignore
+    select.xaxis.ticker.num_minor_ticks = 10  # type: ignore
+    # select.xaxis.formatter = CustomJSTickFormatter(
     #    code="""
     #    const date = new Date(tick * 24 * 60 * 60 * 1000);  // Convert from date2num to milliseconds
     #    const year = date.getUTCFullYear();  // Extract the year
@@ -387,22 +417,27 @@ def main():
     #    const shiftedYear = roundedYear + 5;
     #    return `${shiftedYear}`;  // Return the shifted year
     #    """
-    #)
+    # )
 
     # Adjust ticker for bottom plot to show yearly ticks (desired_num_ticks adjusted)
-    select.xaxis.ticker = DatetimeTicker(desired_num_ticks=12)  # Adjust to suit your range
+    select.xaxis.ticker = DatetimeTicker(  # type: ignore
+        desired_num_ticks=12
+    )  # Adjust to suit your range
 
+    select.yaxis.major_label_text_font_size = "0pt"  # type: ignore
 
-    select.yaxis.major_label_text_font_size = "0pt"
+    select.yaxis.major_tick_line_color = (  # type: ignore
+        None  # turn off y-axis major ticks
+    )
+    select.yaxis.minor_tick_line_color = (  # type: ignore
+        None  # turn off y-axis minor ticks
+    )
 
-    select.yaxis.major_tick_line_color = None  # turn off y-axis major ticks
-    select.yaxis.minor_tick_line_color = None  # turn off y-axis minor ticks
-
-    p.axis.axis_label_text_font_size = "20px"
-    select.axis.axis_label_text_font_size = "20px"
-    p.axis.major_label_text_font_size = "15px"
-    select.axis.major_label_text_font_size = "15px"
-    select.yaxis.major_label_text_font_size = "0px"
+    p.axis.axis_label_text_font_size = "20px"  # type: ignore
+    select.axis.axis_label_text_font_size = "20px"  # type: ignore
+    p.axis.major_label_text_font_size = "15px"  # type: ignore
+    select.axis.major_label_text_font_size = "15px"  # type: ignore
+    select.yaxis.major_label_text_font_size = "0px"  # type: ignore
 
     altitude = -7 * np.log(np.array(pressure) / 1013.25)
 
@@ -415,12 +450,17 @@ def main():
     p.add_layout(colorbar, "below")
 
     select.title = "Move/resize slider by dragging"
-    select.title.text_font_size = "15px"
+    select.title.text_font_size = "15px"  # type: ignore
 
-    # show(column(p, select))
-    # show(p)
-    # output_file(filename="static.html", title="Static HTML file")
-    # save(p)
+    if SHOW:
+        show(column(p, select))
+        # show(p)
+        return None, None
+
+    if SAVE_STATIC:
+        output_file(filename="plot_only.html", title="Static HTML file")
+        save(p)
+        return None, None
 
     return components(column(p, select))
 
@@ -429,15 +469,16 @@ if __name__ == "__main__":
 
     script, div = main()
 
-    print(div)
-    updated_html = template_html.replace("{{TEMPLATE_DIV}}", div)
+    if all(x is not None for x in (script, div)):
+        # print(div)
+        updated_html = template_html.replace("{{TEMPLATE_DIV}}", div)  # type: ignore
 
-    with open("plot.js", "w") as file:
-        file.write(
-            script.replace('<script type="text/javascript">', "").replace(
-                "</script>", ""
+        with open("plot.js", "w") as file:
+            file.write(
+                script.replace('<script type="text/javascript">', "").replace(  # type: ignore
+                    "</script>", ""
+                )
             )
-        )
 
-    with open("plot.html", "w") as file:
-        file.write(updated_html)
+        with open("plot.html", "w") as file:
+            file.write(updated_html)
