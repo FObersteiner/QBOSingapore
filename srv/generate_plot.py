@@ -14,7 +14,7 @@ from bokeh.models import RangeTool, Range1d, CustomJSTickFormatter
 from bokeh.layouts import column
 from bokeh import palettes
 from bokeh import __version__ as bokeh_version
-from bokeh.models import AdaptiveTicker 
+from bokeh.models import AdaptiveTicker
 
 
 # ----------------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ DATA_SIN_URL = "https://www.atmohub.kit.edu/data/singapore.dat"
 # where to expect the QBO data
 DATA_QBO_URL = "https://www.atmohub.kit.edu/data/qbo.dat"
 
-# save only plot to single html file?
+# save plot+js to single html file?
 SAVE_STATIC = False
 
 # only show the plot, don't save it?
@@ -35,28 +35,31 @@ SHOW = False
 # if the specified palette is not available, it will fall back to 'Spectral8'
 COLOR_PALETTE = "RdBu"
 
-SIZING_MODE = "fixed"
+SIZING_MODE = "stretch_width"
 
 # ----------------------------------------------------------------------------------------
 
-template_html = f"""
+template_html = """
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>QBO-Plot</title>
     <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-{bokeh_version}.min.js"></script>
     <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-{bokeh_version}.min.js"></script>
     <script type="text/javascript">
         Bokeh.set_log_level("info");
     </script>
+    <style>
+      .bk-Column {
+        width: 100%;
+        height: 750px;
+      }
+    </style>
   </head>
   <body>
-    {{{{TEMPLATE_DIV}}}}
+    {{TEMPLATE_DIV}}
   </body>
   <script src="plot.js"></script>
 </html>
@@ -284,13 +287,14 @@ def main():
 
     print(
         "data range:\n  from",
-        mdates.num2date(axt[0]).strftime("%Y-%m-%d"), "to",
+        mdates.num2date(axt[0]).strftime("%Y-%m-%d"),
+        "to",
         mdates.num2date(axt[-1]).strftime("%Y-%m-%d"),
     )
 
     p = figure(
         width=1200,
-        height=500,
+        height=550,
         y_axis_type="log",
         y_range=(max(pressure), min(pressure)),  # type: ignore
         x_range=(  # type: ignore
@@ -300,6 +304,9 @@ def main():
         y_axis_label="Pressure [hPa]",
         x_axis_type="datetime",
         sizing_mode=SIZING_MODE,
+        match_aspect=False,
+        toolbar_location="above",
+        output_backend="webgl",
     )
 
     # p.title="Quasi-Biennial-Oscillation (QBO)"
@@ -321,15 +328,17 @@ def main():
         width=1200,
         height=200,
         y_axis_type="log",
-        tools="",
-        toolbar_location=None,
         y_range=p.y_range,
         x_axis_label="Time [year]",
         sizing_mode=SIZING_MODE,
+        match_aspect=False,
         x_range=(  # type: ignore
             mdates.date2num(np.datetime64("1950-01-01")),
             mdates.date2num(np.datetime64("2030-01-01")),
         ),
+        tools="",
+        toolbar_location=None,
+        output_backend="webgl",
     )
 
     select.contour(
@@ -383,7 +392,7 @@ return `${date.toISOString()}`;
     p.xaxis.ticker = AdaptiveTicker(  # type: ignore
         base=365.25,  # try to make a tick every year
         min_interval=1,  # max. resolution is 1 day
-        max_interval=365 * 10, # min. resolution is 10 years
+        max_interval=365 * 10,  # min. resolution is 10 years
     )
     p.xaxis[0].formatter = CustomJSTickFormatter(code=formatter_js_my)
 
@@ -398,7 +407,7 @@ return `${date.toISOString()}`;
 
     if SAVE_STATIC:
         output_file(filename="plot_only.html", title="Static HTML file")
-        save(p)
+        save(column(p, select))
         return None, None
 
     return components(column(p, select))
@@ -408,15 +417,20 @@ if __name__ == "__main__":
 
     script, div = main()
 
+    # fmt: off
     if all(x is not None for x in (script, div)):
-        updated_html = template_html.replace("{{TEMPLATE_DIV}}", div)  # type: ignore
-
-        with open("plot.js", "w") as file:
-            file.write(
-                script.replace('<script type="text/javascript">', "").replace(  # type: ignore
-                    "</script>", ""
-                )
-            )
-
+        updated_html = (
+            template_html
+                .replace("{{TEMPLATE_DIV}}", div)  # type: ignore
+                .replace("{bokeh_version}", bokeh_version)  # type: ignore
+        )  
         with open("plot.html", "w") as file:
             file.write(updated_html)
+
+        updated_script = (
+                script
+                    .replace('<script type="text/javascript">', "")  # type: ignore
+                    .replace("</script>", "")  # type: ignore
+        )
+        with open("plot.js", "w") as file:
+            file.write(updated_script)
