@@ -12,20 +12,16 @@ import io
 import datetime
 
 import numpy as np
-import matplotlib as mpl
-import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 from requests import get
 from urllib.request import urlopen
 from scipy.interpolate import griddata
 
-from bokeh.plotting import figure
+from bokeh.plotting import figure, output_file, save, show
 from bokeh.embed import components
 from bokeh.models import RangeTool, Range1d, CustomJSTickFormatter
 from bokeh.layouts import column
-from bokeh.palettes import Sunset8
-from bokeh import __version__ as bokeh_version
-from bokeh.models import DatetimeTicker, DatetimeTickFormatter
 
 template_html = f"""
 <!DOCTYPE html>
@@ -33,15 +29,17 @@ template_html = f"""
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
     <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-{bokeh_version}.min.js"></script>
     <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-{bokeh_version}.min.js"></script>
     <script type="text/javascript">
         Bokeh.set_log_level("info");
     </script>
+    <style>
+      .bk-Column {
+        width: 100%;
+        height: 750px;
+      }
+    </style>
   </head>
   <body>
     {{{{TEMPLATE_DIV}}}}
@@ -50,9 +48,33 @@ template_html = f"""
 </html>
 """
 
+# ----------------------------------------------------------------------------------------
 
-def download(url, file_name):
-    # open in binary mode
+
+def get_palette(palette_name: str, n_colors: int = 9):
+    """
+    Get color palette by name, with n colors.
+    Common number of colors are [9, 10, 11, 12, 256].
+    If n is not available, interp_palette is used to generate one.
+    """
+
+    try:
+        palette_full_name = f"{palette_name}{n_colors}"
+        return getattr(palettes, palette_full_name)
+    except AttributeError:
+        pass
+
+    try:
+        palette = getattr(palettes, palette_name)
+    except AttributeError:
+        print(f"Palette {palette_name} not found. Using Spectral8 instead.")
+        return palettes.Spectral8
+
+    return palettes.interp_palette(palette[max(palette.keys())], n_colors)
+
+
+def url_to_file(url, file_name):
+    """Dump the content at a URL into a file."""
     with open(file_name, "wb") as file:
         # get request
         response = get(url)
@@ -66,9 +88,8 @@ def read_singapore(nmonth, nyear):
     dats = []
     count = 0
     date = []
-    url = "https://www.atmohub.kit.edu/data/singapore.dat"
-    # download(url,"Data/singapore.dat")
-    with urlopen(url) as file:
+
+    with urlopen(DATA_SIN_URL) as file:
         for i in range(3):
             headerlines.append(file.readline().decode().strip())
         for year in range(1987, nyear + 1):
@@ -101,15 +122,14 @@ def read_singapore(nmonth, nyear):
             count = count + 1
     pressure = [100, 90, 80, 70, 60, 50, 45, 40, 35, 30, 25, 20, 15, 12, 10]
     altitude = -7 * np.log(np.array(pressure) / 1013.25)
-    fds = list(mpl.dates.date2num(date))
+    fds = list(mdates.date2num(date))
     fds = np.array(fds)
     return np.array(dats).T[::-1], fds, pressure, altitude
 
 
 def read_qbo():
-    url = "https://www.atmohub.kit.edu/data/qbo.dat"
 
-    with urlopen(url) as response:
+    with urlopen(DATA_QBO_URL) as response:
         content = response.read().decode("utf-8")
 
     data = np.genfromtxt(
@@ -156,13 +176,9 @@ def read_qbo():
         missing_values=" ",
     )
 
-    # url = "https://www.atmohub.kit.edu/data/qbo.dat"
-    ##download(url,"singapore_winds_1953-2017_qbo.dat")
-    # data = np.genfromtxt('/Users/tobias/Git/QBOSingapore/srv/qbo.dat',skip_header=9,dtype=['S6','S4','i4','i1','i4','i1','i4','i1','i4','i1','i4','i1','i4','i1','i4','i1'],names=['station','date','p70','n70','p50','n50','p40','n40','p30','n30','p20','n20','p15','n15','p10','n10'],delimiter=[6,4,6,2,5,2,5,2,5,2,5,2,5,2,5,2],filling_values=-999999,missing_values=' ')#
     date = []
     dlen = 0
-    for i in range(len(data)):
-        # print(data['date'][i])
+    for i, _ in enumerate(data):
         if data["date"][i]:
             dlen = dlen + 1
             if int(data["date"][i]) > 5000:
@@ -178,8 +194,8 @@ def read_qbo():
                     )
                 )
 
-    fds = mpl.dates.date2num(date)
-    #
+    fds = mdates.date2num(date)
+
     up = np.array(
         list(
             [
@@ -196,24 +212,33 @@ def read_qbo():
 
     pressure = [70, 50, 40, 30, 20, 15, 10]
     altitude = -7 * np.log(np.array(pressure) / 1013.25)
-    #    print(up)
+
     return up, fds, pressure, altitude
 
 
 def main():
+    print("make QBO plot...")
+
     up1, fds1, pressure1, altitude1 = read_qbo()
     tnmoth = np.shape(up1)[1]  # total number of months
     up = np.zeros([15, tnmoth]) * np.nan
     nmonth = np.shape(up1)[1] % 12  # number of months above a whole year
-    nyear = mpl.dates.num2date(fds1[-1]).year
+    nyear = mdates.num2date(fds1[-1]).year
     if nmonth == 0:
         nyear += 1
-    print(nmonth, nyear)
+    # print(nmonth, nyear)
+
     up2, fds2, pressure, altitude = read_singapore(nmonth, nyear)
     fds = fds1
+    # print(fds[-fds2.size], fds[-fds2.size + 1])
+    # print(fds2[0])
+    # print(np.size(fds1), np.size(fds2))
+
     fds[-fds2.size :] = fds2
     fds = np.array(fds)
-    print(fds[-1])
+    # print(np.size(fds), fds[-1], fds1[-1], fds2[-1])
+    # print(mdates.num2date(fds2[-1]))
+
     up1 = up1 * 1.0
     up1[up1 < -10000] = np.nan
     up[3, :] = up1[0, :]
@@ -230,16 +255,10 @@ def main():
     time = time[ind]
     press = press[ind]
 
-    # u = griddata(time,press,uu,fds,pressure,interp='linear')
-    # print(np.shape(time), np.shape(press), np.shape(uu))
-    # print(np.shape(fds), np.shape(pressure))
     points1 = np.array([[time[i], press[i]] for i in range(len(time))])
-    # print(points1.shape)
     X, Y = np.meshgrid(fds, pressure)
     u = griddata(points1, uu, (X, Y), method="linear")
-    # nrows = 7
 
-    contour_levels = range(-40, 45, 5)
     deltat = int((np.nanmax(fds) - fds[0]) / 1) + 1
 
     by0 = fds[0]
@@ -249,37 +268,61 @@ def main():
 
     axz = u[:, np.nanargmin(abs(fds - by0)) : 1 + np.nanargmin(abs(fds - by1))]
 
-    # axt = [t.strftime("%m/%Y") for t in mpl.dates.num2date(axt)]
+    print(
+        "data range:\n  from",
+        mdates.num2date(axt[0]).strftime("%Y-%m-%d"),
+        "to",
+        mdates.num2date(axt[-1]).strftime("%Y-%m-%d"),
+    )
 
     p = figure(
         width=1200,
-        height=500,
+        height=550,
         y_axis_type="log",
-        y_range=(max(pressure), min(pressure)),
-        x_range=(axt[0], axt[100]),
+        y_range=(max(pressure), min(pressure)),  # type: ignore
+        x_range=(  # type: ignore
+            mdates.date2num(np.datetime64("1952-03-01")),
+            mdates.date2num(np.datetime64("1962-03-01")),
+        ),
         y_axis_label="Pressure [hPa]",
-        # title="Quasi-Biennial-Oscillation (QBO)"
+        x_axis_type="datetime",
+        sizing_mode=SIZING_MODE,
+        match_aspect=False,
+        toolbar_location="above",
+        output_backend="webgl",
     )
-    p.title.text_font_size = "25px"
-    p.title.align = "center"
+
+    # p.title="Quasi-Biennial-Oscillation (QBO)"
+    # p.title.text_font_size = "25px"  # type: ignore
+    # p.title.align = "center"  # type: ignore
+
+    contour_levels = list(range(-40, 45, 5))
 
     contour_renderer = p.contour(
-        axt, pressure, axz, contour_levels, fill_color=Sunset8, line_color="black"
+        axt,
+        pressure,
+        axz,
+        contour_levels,
+        fill_color=get_palette(COLOR_PALETTE, len(contour_levels)),
+        line_color="black",
     )
 
     select = figure(
         width=1200,
         height=200,
         y_axis_type="log",
-        tools="",
-        toolbar_location=None,
         y_range=p.y_range,
         x_axis_label="Time [year]",
+        sizing_mode=SIZING_MODE,
+        match_aspect=False,
+        x_range=(  # type: ignore
+            mdates.date2num(np.datetime64("1950-01-01")),
+            mdates.date2num(np.datetime64("2030-01-01")),
+        ),
+        tools="",
+        toolbar_location=None,
+        output_backend="webgl",
     )
-
-    range_tool = RangeTool(x_range=p.x_range)
-    range_tool.overlay.fill_color = "red"
-    range_tool.overlay.fill_alpha = 0.4
 
     select.contour(
         axt,
@@ -287,68 +330,69 @@ def main():
         axz,
         contour_levels,
         line_alpha=0.1,
-        fill_color=Sunset8,
+        fill_color=get_palette(COLOR_PALETTE, len(contour_levels)),
         line_color="black",
     )
+
+    range_tool = RangeTool(x_range=p.x_range, start_gesture="pan")
+    range_tool.overlay.fill_color = "red"
+    range_tool.overlay.fill_alpha = 0.4
     select.add_tools(range_tool)
 
-    p.xaxis[0].formatter = CustomJSTickFormatter(
-        code="""
-    const milliseconds = tick * 24 * 60 * 60 * 1000;
+    select.title = "Move/resize slider by dragging"
+    select.title.text_font_size = "15px"  # type: ignore
+    select.axis.axis_label_text_font_size = "20px"  # type: ignore
+    select.axis.major_label_text_font_size = "15px"  # type: ignore
+    select.yaxis.major_label_text_font_size = "0px"  # type: ignore
 
-    // Create a Date object using the calculated milliseconds
-    const date = new Date(milliseconds);
-
-    // Extract the month and year from the Date object
-    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0'); // Month is 0-based
-    const year = date.getUTCFullYear();
-
-    // Format the result as MM/YYYY
-    return `${month}/${year}`;
+    formatter_js_my = """
+const date = new Date(tick * 24 * 60 * 60 * 1000);
+const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+const year = date.getUTCFullYear();
+return `${month}/${year}`;
     """
-    )
-    select.xaxis[0].formatter = CustomJSTickFormatter(
-        code="""
-    const milliseconds = tick * 24 * 60 * 60 * 1000;
-
-    // Create a Date object using the calculated milliseconds
-    const date = new Date(milliseconds);
-
-    // Extract the month and year from the Date object
-    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0'); // Month is 0-based
-    const year = date.getUTCFullYear();
-
-    // Format the result as MM/YYYY
-    return `${month}/${year}`;
+    formatter_js_y = """
+const date = new Date(tick * 24 * 60 * 60 * 1000);
+return `${date.getUTCFullYear()}`;
     """
+    formatter_js_iso = """
+const date = new Date(tick * 24 * 60 * 60 * 1000);
+return `${date.toISOString()}`;
+    """
+
+    select.xaxis.ticker = AdaptiveTicker(  # type: ignore
+        base=365.25 * 10,  # try to make a tick every 10 years
     )
-
-    select.yaxis.major_label_text_font_size = "0pt"
-
-    select.yaxis.major_tick_line_color = None  # turn off y-axis major ticks
-    select.yaxis.minor_tick_line_color = None  # turn off y-axis minor ticks
-
-    p.axis.axis_label_text_font_size = "20px"
-    select.axis.axis_label_text_font_size = "20px"
-    p.axis.major_label_text_font_size = "15px"
-    select.axis.major_label_text_font_size = "15px"
-    select.yaxis.major_label_text_font_size = "0px"
+    select.xaxis[0].formatter = CustomJSTickFormatter(code=formatter_js_y)
+    select.yaxis.major_label_text_font_size = "0pt"  # type: ignore
+    select.yaxis.major_tick_line_color = None  # type: ignore
+    select.yaxis.minor_tick_line_color = None  # type: ignore
 
     altitude = -7 * np.log(np.array(pressure) / 1013.25)
-
     p.extra_y_ranges["altitude"] = Range1d(min(altitude), max(altitude))
-    # p.contour(axt, pressure, axz, contour_levels, fill_color=Sunset8, line_color="black", y_range_name='altitude')
+    p.axis.axis_label_text_font_size = "20px"  # type: ignore
+    p.axis.major_label_text_font_size = "15px"  # type: ignore
+    p.xaxis.ticker = AdaptiveTicker(  # type: ignore
+        base=365.25,  # try to make a tick every year
+        min_interval=1,  # max. resolution is 1 day
+        max_interval=365 * 10,  # min. resolution is 10 years
+    )
+    p.xaxis[0].formatter = CustomJSTickFormatter(code=formatter_js_my)
 
     colorbar = contour_renderer.construct_color_bar()
     colorbar.title = "East to West (-/+) monthly mean zonal winds [m/s]"
     colorbar.title_text_font_size = "15px"
     p.add_layout(colorbar, "below")
 
-    select.title = "Move/resize slider by dragging"
-    select.title.text_font_size = "15px"
+    if SHOW:
+        show(column(p, select))
+        return None, None
 
-    # show(column(p, select))
-    # show(p)
+    if SAVE_STATIC:
+        output_file(filename="plot_only.html", title="Static HTML file")
+        save(column(p, select))
+        return None, None
+
     return components(column(p, select))
 
 
@@ -356,15 +400,20 @@ if __name__ == "__main__":
 
     script, div = main()
 
-    print(div)
-    updated_html = template_html.replace("{{TEMPLATE_DIV}}", div)
+    # fmt: off
+    if all(x is not None for x in (script, div)):
+        updated_html = (
+            template_html
+                .replace("{{TEMPLATE_DIV}}", div)  # type: ignore
+                .replace("{bokeh_version}", bokeh_version)  # type: ignore
+        )  
+        with open("plot.html", "w") as file:
+            file.write(updated_html)
 
-    with open("plot.js", "w") as file:
-        file.write(
-            script.replace('<script type="text/javascript">', "").replace(
-                "</script>", ""
-            )
+        updated_script = (
+                script
+                    .replace('<script type="text/javascript">', "")  # type: ignore
+                    .replace("</script>", "")  # type: ignore
         )
-
-    with open("plot.html", "w") as file:
-        file.write(updated_html)
+        with open("plot.js", "w") as file:
+            file.write(updated_script)

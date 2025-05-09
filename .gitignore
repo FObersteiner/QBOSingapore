@@ -178,6 +178,9 @@ QBO/template/
 data/
 srv/archive/
 .DS_Store
+# plot
+plot.html
+plot.js
 
 # temporary files
 *.~*
