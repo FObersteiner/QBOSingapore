@@ -1,3 +1,13 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = [
+#     "bokeh",
+#     "matplotlib",
+#     "numpy",
+#     "requests",
+#     "scipy",
+# ]
+# ///
 import io
 import datetime
 
@@ -14,8 +24,10 @@ from bokeh.embed import components
 from bokeh.models import RangeTool, Range1d, CustomJSTickFormatter
 from bokeh.layouts import column
 from bokeh.palettes import Sunset8
+from bokeh import __version__ as bokeh_version
+from bokeh.models import DatetimeTicker, DatetimeTickFormatter
 
-template_html = """
+template_html = f"""
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -25,14 +37,14 @@ template_html = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-3.4.0.min.js"></script>
-    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.4.0.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-{bokeh_version}.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-{bokeh_version}.min.js"></script>
     <script type="text/javascript">
         Bokeh.set_log_level("info");
     </script>
   </head>
   <body>
-    {{TEMPLATE_DIV}}
+    {{{{TEMPLATE_DIV}}}}
   </body>
   <script src="plot.js"></script>
 </html>
@@ -225,7 +237,7 @@ def main():
     # print(points1.shape)
     X, Y = np.meshgrid(fds, pressure)
     u = griddata(points1, uu, (X, Y), method="linear")
-    nrows = 7
+    # nrows = 7
 
     contour_levels = range(-40, 45, 5)
     deltat = int((np.nanmax(fds) - fds[0]) / 1) + 1
