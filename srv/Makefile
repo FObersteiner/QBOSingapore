@@ -5,7 +5,6 @@
 FIGS = ../qbo_Rplot
 WDIR = .
 REPO = ../QBO/qbo_data/
-REPO = .
 DATFILES = ${REPO}/qbo.dat ${REPO}/singapore202*.dat ${REPO}/singapore.dat 
 
 
