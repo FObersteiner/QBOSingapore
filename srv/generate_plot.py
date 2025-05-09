@@ -1,13 +1,3 @@
-# /// script
-# requires-python = ">=3.12"
-# dependencies = [
-#     "bokeh",
-#     "matplotlib",
-#     "numpy",
-#     "requests",
-#     "scipy",
-# ]
-# ///
 import io
 import datetime
 
@@ -22,13 +12,40 @@ from bokeh.plotting import figure, output_file, save, show
 from bokeh.embed import components
 from bokeh.models import RangeTool, Range1d, CustomJSTickFormatter
 from bokeh.layouts import column
+from bokeh import palettes
+from bokeh import __version__ as bokeh_version
+from bokeh.models import AdaptiveTicker
 
-template_html = f"""
+
+# ----------------------------------------------------------------------------------------
+# controls
+
+# where to expect the Singapore data
+DATA_SIN_URL = "https://www.atmohub.kit.edu/data/singapore.dat"
+
+# where to expect the QBO data
+DATA_QBO_URL = "https://www.atmohub.kit.edu/data/qbo.dat"
+
+# save plot+js to single html file?
+SAVE_STATIC = False
+
+# only show the plot, don't save it?
+SHOW = False
+
+# if the specified palette is not available, it will fall back to 'Spectral8'
+COLOR_PALETTE = "RdBu"
+
+SIZING_MODE = "stretch_width"
+
+# ----------------------------------------------------------------------------------------
+
+template_html = """
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QBO-Plot</title>
     <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-{bokeh_version}.min.js"></script>
     <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-{bokeh_version}.min.js"></script>
     <script type="text/javascript">
@@ -42,7 +59,7 @@ template_html = f"""
     </style>
   </head>
   <body>
-    {{{{TEMPLATE_DIV}}}}
+    {{TEMPLATE_DIV}}
   </body>
   <script src="plot.js"></script>
 </html>
